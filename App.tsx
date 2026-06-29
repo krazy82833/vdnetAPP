@@ -13,13 +13,11 @@ import { BottomTabs } from "./src/components/BottomTabs";
 import { IconBubble } from "./src/components/IconBubble";
 import { MapCanvas } from "./src/components/MapCanvas";
 import { NodeSheet } from "./src/components/NodeSheet";
-import { ProductShowcase, RuntimePill } from "./src/components/ProductShowcase";
 import { appConfig } from "./src/config";
 import { slagCore, SlagCoreSession } from "./src/core/slagCore";
 import { nodes as fallbackNodes, regions, usageSummary } from "./src/data/nodes";
 import { InviteScreen, ProfileScreen, StatsScreen } from "./src/screens/InfoScreens";
 import { LoginResult, ppnodeApi } from "./src/services/ppnodeApi";
-import { brandCopy, brandTheme } from "./src/theme/brand";
 import { ApiDiagnostic, ConnectionState, NodeItem, ProxyMode, TabKey, UsageSummary } from "./src/types";
 import { formatBytes, formatDuration } from "./src/utils/format";
 
@@ -79,7 +77,6 @@ export default function App() {
     () => regions.find((region) => region.id === selectedNode.regionId) ?? regions[0],
     [selectedNode.regionId]
   );
-  const coreDiagnostics = slagCore.getDiagnostics();
 
   const connected = connectionState === "connected";
 
@@ -181,7 +178,6 @@ export default function App() {
         <MapCanvas state={connectionState} selectedNode={selectedNode} regions={visibleRegions} />
         <ScrollView style={styles.panelWrap} contentContainerStyle={styles.panelContent} bounces={false}>
           <View style={styles.grabber} />
-          <ProductShowcase compact />
           {(apiError || diagnostics.length > 0) && (
             <View style={styles.apiNotice}>
               <Text style={styles.apiNoticeTitle}>API 接入提示</Text>
@@ -225,7 +221,6 @@ export default function App() {
 
           <View style={styles.connectionCard}>
             <View style={styles.cardHeader}>
-              <RuntimePill nativeReady={coreDiagnostics.nativeTunnelReady} />
               <Text style={styles.cardEyebrow}>当前连接</Text>
               <Pressable style={styles.switchNodeButton} onPress={() => syncRemoteData(currentAuth.token)} disabled={isSyncing}>
                 {isSyncing ? <ActivityIndicator color="#2394dc" /> : <Text style={styles.switchNodeText}>刷新节点 ↻</Text>}
@@ -318,7 +313,6 @@ export default function App() {
 function LoginScreen({ onLogin }: { onLogin: (auth: LoginResult) => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -338,30 +332,14 @@ function LoginScreen({ onLogin }: { onLogin: (auth: LoginResult) => void }) {
 
   return (
     <SafeAreaView style={styles.loginScreen}>
-      <ProductShowcase />
       <View style={styles.loginPanel}>
-        <Text style={styles.loginBrand}>{brandCopy.productName}</Text>
+        <Text style={styles.loginBrand}>{appConfig.appName}</Text>
         <Text style={styles.loginTitle}>登录 PPNode 账户</Text>
         <Text style={styles.loginHint}>API: {appConfig.apiBaseUrl}</Text>
-        <Text style={styles.loginSubtitle}>全端统一 UI · PPANEL 已接入 · 手机号注册入口预留</Text>
-        <View style={styles.loginModeTabs}>
-          <Pressable
-            style={[styles.loginModeTab, loginMode === "email" && styles.loginModeTabActive]}
-            onPress={() => setLoginMode("email")}
-          >
-            <Text style={[styles.loginModeText, loginMode === "email" && styles.loginModeTextActive]}>邮箱登录</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.loginModeTab, loginMode === "phone" && styles.loginModeTabActive]}
-            onPress={() => setLoginMode("phone")}
-          >
-            <Text style={[styles.loginModeText, loginMode === "phone" && styles.loginModeTextActive]}>手机号入口</Text>
-          </Pressable>
-        </View>
 
         <TextInput
           autoCapitalize="none"
-          keyboardType={loginMode === "phone" ? "phone-pad" : "email-address"}
+          keyboardType="email-address"
           placeholder="邮箱"
           style={styles.input}
           value={email}
@@ -415,23 +393,20 @@ const styles = StyleSheet.create({
   loginScreen: {
     flex: 1,
     justifyContent: "center",
-    gap: 16,
-    backgroundColor: brandTheme.wash,
+    backgroundColor: "#eef3fa",
     padding: 22
   },
   loginPanel: {
-    borderWidth: 1,
-    borderColor: brandTheme.border,
     borderRadius: 22,
     backgroundColor: "#ffffff",
     padding: 22,
-    shadowColor: brandTheme.blue,
-    shadowOpacity: 0.14,
-    shadowRadius: 28,
+    shadowColor: "#7c879b",
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
     elevation: 5
   },
   loginBrand: {
-    color: brandTheme.blue,
+    color: "#2f9cec",
     fontSize: 18,
     fontWeight: "900",
     marginBottom: 10
@@ -444,42 +419,8 @@ const styles = StyleSheet.create({
   loginHint: {
     color: "#68707d",
     fontSize: 13,
+    marginBottom: 22,
     marginTop: 8
-  },
-  loginSubtitle: {
-    color: brandTheme.muted,
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 19,
-    marginTop: 8
-  },
-  loginModeTabs: {
-    flexDirection: "row",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: brandTheme.border,
-    borderRadius: 999,
-    backgroundColor: "#f7fbff",
-    marginBottom: 16,
-    marginTop: 16,
-    padding: 4
-  },
-  loginModeTab: {
-    flex: 1,
-    alignItems: "center",
-    borderRadius: 999,
-    paddingVertical: 9
-  },
-  loginModeTabActive: {
-    backgroundColor: brandTheme.blue
-  },
-  loginModeText: {
-    color: brandTheme.muted,
-    fontSize: 13,
-    fontWeight: "900"
-  },
-  loginModeTextActive: {
-    color: "#ffffff"
   },
   input: {
     minHeight: 54,
