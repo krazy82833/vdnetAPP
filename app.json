@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "VDNet",
+    "slug": "vdnet-ppnode-app",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vdnet.ppnode"
+    },
+    "android": {
+      "package": "com.vdnet.ppnode",
+      "adaptiveIcon": {
+        "backgroundColor": "#eef4fb"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
+
