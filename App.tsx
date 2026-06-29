@@ -14,6 +14,7 @@ import { IconBubble } from "./src/components/IconBubble";
 import { MapCanvas } from "./src/components/MapCanvas";
 import { NodeSheet } from "./src/components/NodeSheet";
 import { appConfig } from "./src/config";
+import { slagCore, SlagCoreSession } from "./src/core/slagCore";
 import { nodes as fallbackNodes, regions, usageSummary } from "./src/data/nodes";
 import { InviteScreen, ProfileScreen, StatsScreen } from "./src/screens/InfoScreens";
 import { LoginResult, ppnodeApi } from "./src/services/ppnodeApi";
@@ -37,6 +38,7 @@ export default function App() {
   const [sheetVisible, setSheetVisible] = useState(false);
   const [expandedRegionId, setExpandedRegionId] = useState<string | null>("hk");
   const [connectedSeconds, setConnectedSeconds] = useState(0);
+  const [coreSession, setCoreSession] = useState<SlagCoreSession | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [diagnostics, setDiagnostics] = useState<ApiDiagnostic[]>([]);
@@ -123,24 +125,32 @@ export default function App() {
     setIsSyncing(false);
   }
 
-  function handleConnectionToggle() {
+  async function handleConnectionToggle() {
     if (connectionState === "connected") {
-      setConnectionState("disconnected");
+      await slagCore.disconnect();
+      setCoreSession(null);
       setConnectedSeconds(0);
+      setConnectionState("disconnected");
       return;
     }
 
     setConnectionState("connecting");
-    setTimeout(() => {
-      setConnectionState("connected");
+    try {
+      const session = await slagCore.connect(selectedNode, proxyMode);
+      setCoreSession(session);
       setConnectedSeconds(0);
-    }, 650);
+      setConnectionState(session.state);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "SlagCore connection failed.");
+      setConnectionState("disconnected");
+    }
   }
 
-  function handleLatencyTest() {
+  async function handleLatencyTest() {
+    const latencyMs = await slagCore.testLatency(selectedNode);
     setSelectedNode((current) => ({
       ...current,
-      latencyMs: Math.max(48, current.latencyMs - 12)
+      latencyMs
     }));
   }
 
@@ -202,6 +212,10 @@ export default function App() {
                   {item.bodyPreview ? ` | ${item.bodyPreview}` : ""}
                 </Text>
               ))}
+              <Text style={styles.apiNoticeText}>
+                Core {slagCore.runtime.name} {slagCore.runtime.version}: {slagCore.runtime.bridge}
+                {coreSession ? ` | ${coreSession.tunnelId}` : ""}
+              </Text>
             </View>
           )}
 
